@@ -11,5 +11,11 @@ fn main() {
         process::exit(1);
     });
 
-    println!("Config parsed: {:?}", config)
+    println!("Config parsed: {:?}", config);
+
+    if let Err(e) = logmonitoring::run(config) {
+        eprintln!("Runtime error: {}", e);
+
+        process::exit(1);
+    }
 }
