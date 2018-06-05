@@ -5,6 +5,10 @@ use std::io::prelude::*;
 use std::thread;
 use std::time::Duration;
 
+mod parser;
+
+use parser::Parser;
+
 #[derive(Debug)]
 pub struct Config {
     pub filename: String
@@ -25,14 +29,24 @@ impl Config {
 
 pub fn run(config: Config) -> Result<(), Box<(Error)>> {
     let mut f = File::open(config.filename)?;
+    let parser = Parser::new();
 
     let one_second = Duration::from_secs(1);
 
     loop {
-        let mut content = String::new();
+        let mut contents = String::new();
 
-        f.read_to_string(&mut content)?;
-        println!("{}", content);
+        f.read_to_string(&mut contents)?;
+
+        if contents.len() > 0 {
+            let lines = contents.split('\n');
+            for line in lines {
+                match parser.parse(line) {
+                    Some(http_log) => println!("{:?}", http_log),
+                    None => continue,
+                }
+            }
+        }
 
         thread::sleep(one_second);
     }
