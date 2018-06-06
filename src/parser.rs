@@ -53,3 +53,35 @@ impl Parser {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_parse_a_valid_log_line() {
+        let parser = Parser::new();
+        let result = parser.parse("204.249.225.59 - - [05/Jun/2018:20:55:43 +0000] \"GET /pub/rmharris/catalogs/dawsocat/intro.html HTTP/1.0\" 200 3542");
+
+        assert_eq!(result.is_some(), true);
+
+        let http_log = result.unwrap();
+
+        assert_eq!(http_log.host, "204.249.225.59");
+        assert_eq!(http_log.identity, "-");
+        assert_eq!(http_log.user, "-");
+        assert_eq!(http_log.time, "05/Jun/2018:20:55:43 +0000");
+        assert_eq!(http_log.request, "GET /pub/rmharris/catalogs/dawsocat/intro.html HTTP/1.0");
+        assert_eq!(http_log.status, "200");
+        assert_eq!(http_log.size, "3542");
+    }
+
+    #[test]
+    fn should_not_parse_an_invalid_log_line() {
+        let parser = Parser::new();
+        // Missing the user
+        let result = parser.parse("204.249.225.59 - [05/Jun/2018:20:55:43 +0000] \"GET /pub/rmharris/catalogs/dawsocat/intro.html HTTP/1.0\" 200 3542");
+
+        assert_eq!(result.is_none(), true);
+    }
+}
+
