@@ -6,7 +6,7 @@ pub struct Parser {
     pub regex: Regex,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct HttpLog {
     pub host: String,
     pub identity: String,
