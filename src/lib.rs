@@ -13,7 +13,7 @@ use parser::Parser;
 
 #[derive(Debug)]
 pub struct Config {
-    pub filename: String
+    pub filename: String,
 }
 
 impl Config {
@@ -22,7 +22,7 @@ impl Config {
 
         let filename = match args.next() {
             Some(arg) => arg,
-            None => return Err("Didn't get a filename")
+            None => return Err("Didn't get a filename"),
         };
 
         Ok(Config { filename })

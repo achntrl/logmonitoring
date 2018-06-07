@@ -70,7 +70,10 @@ mod test {
         assert_eq!(http_log.identity, "-");
         assert_eq!(http_log.user, "-");
         assert_eq!(http_log.time, "05/Jun/2018:20:55:43 +0000");
-        assert_eq!(http_log.request, "GET /pub/rmharris/catalogs/dawsocat/intro.html HTTP/1.0");
+        assert_eq!(
+            http_log.request,
+            "GET /pub/rmharris/catalogs/dawsocat/intro.html HTTP/1.0"
+        );
         assert_eq!(http_log.status, "200");
         assert_eq!(http_log.size, "3542");
     }
@@ -84,4 +87,3 @@ mod test {
         assert_eq!(result.is_none(), true);
     }
 }
-
