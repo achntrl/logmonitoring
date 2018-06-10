@@ -49,10 +49,10 @@ impl Consumer for ErrorWatcher {
     }
 
     fn report(&self) {
-        println!("Errors rate:");
+        println!("  Errors rate:");
         for (error_code, error_number) in &self.errors {
             println!(
-                "  {}: {:.2}%",
+                "    {}: {:.2}%",
                 error_code,
                 *error_number as f32 / self.total_hits as f32
             );

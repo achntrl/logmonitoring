@@ -7,6 +7,7 @@ use parser::HttpLog;
 pub struct Ranker {
     top_sections: HashMap<String, u32>,
     top_hosts: HashMap<String, u32>,
+    max_ranking: usize,
 }
 
 impl Ranker {
@@ -17,6 +18,7 @@ impl Ranker {
         Ranker {
             top_sections,
             top_hosts,
+            max_ranking: 5,
         }
     }
 
@@ -31,16 +33,42 @@ impl Ranker {
 
         *self.top_sections.entry(section).or_insert(0) += 1;
     }
+
+    fn process_hosts(&mut self, http_log: &HttpLog) {
+        let host = &http_log.host;
+        if host != "-" {
+            *self.top_hosts.entry(host.to_string()).or_insert(0) += 1;
+        }
+    }
 }
 
 impl Consumer for Ranker {
     fn ingest(&mut self, http_log: &HttpLog) {
         self.process_sections(&http_log);
+        self.process_hosts(&http_log);
         self.report();
     }
 
     fn report(&self) {
-        println!("{:?}", self);
+        let mut host_ranking: Vec<(&String, &u32)> = self.top_hosts.iter().collect();
+        host_ranking.sort_by(|a, b| b.1.cmp(a.1));
+        let mut sections_ranking: Vec<(&String, &u32)> = self.top_sections.iter().collect();
+        sections_ranking.sort_by(|a, b| b.1.cmp(a.1));
+
+        host_ranking.truncate(self.max_ranking);
+        sections_ranking.truncate(self.max_ranking);
+
+        println!("  Most requested sections:");
+        for r in &sections_ranking {
+            println!("    {} {:padding$}", r.0, r.1, padding = 50 - r.0.len());
+        }
+
+        println!("  {}  ", "- ".repeat(38));
+
+        println!("  Most active hosts:");
+        for r in &host_ranking {
+            println!("    {} {:padding$}", r.0, r.1, padding = 50 - r.0.len());
+        }
     }
 }
 
@@ -95,4 +123,36 @@ mod test {
 
         assert_eq!(ranker.top_sections, assert_hashmap);
     }
+
+    #[test]
+    fn should_ingest_host() {
+        let mut ranker = Ranker::new();
+        let http_log = HttpLog {
+            host: String::from("204.249.225.59"),
+            ..Default::default()
+        };
+
+        ranker.ingest(&http_log);
+
+        let mut assert_hashmap = HashMap::new();
+        assert_hashmap.insert(String::from("204.249.225.59"), 1);
+
+        assert_eq!(ranker.top_hosts, assert_hashmap);
+    }
+
+    #[test]
+    fn should_not_ingest_empty_host() {
+        let mut ranker = Ranker::new();
+        let http_log = HttpLog {
+            host: String::from("-"),
+            ..Default::default()
+        };
+
+        ranker.ingest(&http_log);
+
+        let assert_hashmap = HashMap::new();
+
+        assert_eq!(ranker.top_hosts, assert_hashmap);
+    }
+
 }
