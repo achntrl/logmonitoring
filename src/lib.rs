@@ -8,7 +8,7 @@ use std::time::Duration;
 mod consumer;
 mod parser;
 
-use consumer::{Consumer, ErrorWatcher};
+use consumer::{Consumer, ErrorWatcher, Ranker};
 use parser::Parser;
 
 #[derive(Debug)]
@@ -36,6 +36,7 @@ pub fn run(config: Config) -> Result<(), Box<(Error)>> {
     let one_second = Duration::from_secs(1);
 
     let mut error_watcher = ErrorWatcher::new();
+    let mut ranker = Ranker::new();
 
     loop {
         let mut contents = String::new();
@@ -46,7 +47,10 @@ pub fn run(config: Config) -> Result<(), Box<(Error)>> {
             let lines = contents.split('\n');
             for line in lines {
                 match parser.parse(line) {
-                    Some(http_log) => error_watcher.ingest(http_log),
+                    Some(http_log) => {
+                        error_watcher.ingest(&http_log);
+                        ranker.ingest(&http_log);
+                    }
                     None => continue,
                 }
             }
