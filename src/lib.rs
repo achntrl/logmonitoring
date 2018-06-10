@@ -8,7 +8,9 @@ use std::time::Duration;
 mod consumer;
 mod parser;
 
-use consumer::{Consumer, ErrorWatcher, Ranker};
+use consumer::errorwatcher::ErrorWatcher;
+use consumer::ranker::Ranker;
+use consumer::Consumer;
 use parser::Parser;
 
 #[derive(Debug)]
