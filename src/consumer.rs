@@ -1,5 +1,6 @@
 use parser::HttpLog;
 use std::collections::HashMap;
+use std::fmt;
 
 pub trait Consumer {
     fn ingest(&mut self, http_log: HttpLog);
@@ -10,6 +11,15 @@ pub trait Consumer {
 enum ErrorCode {
     Error4xx,
     Error5xx,
+}
+
+impl fmt::Display for ErrorCode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ErrorCode::Error4xx => write!(f, "4xx"),
+            ErrorCode::Error5xx => write!(f, "5xx"),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -37,11 +47,19 @@ impl Consumer for ErrorWatcher {
             Some('5') => *self.errors.entry(ErrorCode::Error5xx).or_insert(0) += 1,
             _ => (),
         }
-        println!("Hits: {}, {:?}", self.total_hits, self.errors);
+
+        self.report();
     }
 
     fn report(&self) {
-        unimplemented!();
+        println!("Errors rate:");
+        for (error_code, error_number) in &self.errors {
+            println!(
+                "  {}: {:.2}%",
+                error_code,
+                *error_number as f32 / self.total_hits as f32
+            );
+        }
     }
 }
 
