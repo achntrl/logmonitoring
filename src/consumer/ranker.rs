@@ -40,6 +40,15 @@ impl Ranker {
             *self.top_hosts.entry(host.to_string()).or_insert(0) += 1;
         }
     }
+
+    fn rank<'a>(&self, container: &'a HashMap<String, u32>) -> Vec<(&'a String, &'a u32)> {
+        let mut ranking: Vec<(&String, &u32)> = container.iter().collect();
+        ranking.sort_by(|a, b| b.1.cmp(a.1));
+
+        ranking.truncate(self.max_ranking);
+
+        ranking
+    }
 }
 
 impl Consumer for Ranker {
@@ -50,13 +59,8 @@ impl Consumer for Ranker {
     }
 
     fn report(&self) {
-        let mut host_ranking: Vec<(&String, &u32)> = self.top_hosts.iter().collect();
-        host_ranking.sort_by(|a, b| b.1.cmp(a.1));
-        let mut sections_ranking: Vec<(&String, &u32)> = self.top_sections.iter().collect();
-        sections_ranking.sort_by(|a, b| b.1.cmp(a.1));
-
-        host_ranking.truncate(self.max_ranking);
-        sections_ranking.truncate(self.max_ranking);
+        let host_ranking = self.rank(&self.top_hosts);
+        let sections_ranking = self.rank(&self.top_sections);
 
         println!("  Most requested sections:");
         for r in &sections_ranking {
@@ -155,4 +159,28 @@ mod test {
         assert_eq!(ranker.top_hosts, assert_hashmap);
     }
 
+    #[test]
+    fn should_rank() {
+        let mut ranker = Ranker::new();
+
+        ranker.top_sections.insert(String::from("/"), 12);
+        ranker.top_sections.insert(String::from("/a"), 10);
+        ranker.top_sections.insert(String::from("/b"), 120);
+        ranker.top_sections.insert(String::from("/c"), 1);
+        ranker.top_sections.insert(String::from("/d"), 5);
+        ranker.top_sections.insert(String::from("/e"), 6);
+
+        let sections_ranking = ranker.rank(&ranker.top_sections);
+
+        assert_eq!(
+            sections_ranking,
+            vec![
+                (&String::from("/b"), &120),
+                (&String::from("/"), &12),
+                (&String::from("/a"), &10),
+                (&String::from("/e"), &6),
+                (&String::from("/d"), &5),
+            ]
+        );
+    }
 }
