@@ -55,7 +55,6 @@ impl Consumer for Ranker {
     fn ingest(&mut self, http_log: &HttpLog) {
         self.process_sections(&http_log);
         self.process_hosts(&http_log);
-        self.report();
     }
 
     fn report(&self) {

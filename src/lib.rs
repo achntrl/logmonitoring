@@ -1,3 +1,6 @@
+extern crate chrono;
+
+use std::collections::VecDeque;
 use std::env;
 use std::error::Error;
 use std::fs::File;
@@ -5,13 +8,15 @@ use std::io::prelude::*;
 use std::thread;
 use std::time::Duration;
 
+use chrono::now;
+
 mod consumer;
 mod parser;
 
 use consumer::errorwatcher::ErrorWatcher;
 use consumer::ranker::Ranker;
 use consumer::Consumer;
-use parser::Parser;
+use parser::{HttpLog, Parser};
 
 #[derive(Debug)]
 pub struct Config {
@@ -34,11 +39,17 @@ impl Config {
 pub fn run(config: Config) -> Result<(), Box<(Error)>> {
     let mut f = File::open(config.filename)?;
     let parser = Parser::new();
+    let mut queue: VecDeque<HttpLog> = VecDeque::with_capacity(10000);
 
-    let one_second = Duration::from_secs(1);
+    let ten_seconds = Duration::from_secs(10);
 
     let mut error_watcher = ErrorWatcher::new();
     let mut ranker = Ranker::new();
+
+    let mut consumers: Vec<&mut Consumer> = Vec::new();
+
+    consumers.push(&mut error_watcher);
+    consumers.push(&mut ranker);
 
     loop {
         let mut contents = String::new();
@@ -49,15 +60,26 @@ pub fn run(config: Config) -> Result<(), Box<(Error)>> {
             let lines = contents.split('\n');
             for line in lines {
                 match parser.parse(line) {
-                    Some(http_log) => {
-                        error_watcher.ingest(&http_log);
-                        ranker.ingest(&http_log);
-                    }
+                    Some(http_log) => queue.push_back(http_log),
                     None => continue,
                 }
             }
         }
 
-        thread::sleep(one_second);
+        while queue.len() > 0 {
+            let http_log = queue.pop_front().unwrap();
+            for consumer in &mut consumers {
+                consumer.ingest(&http_log);
+            }
+        }
+
+        println!("{}");
+        for consumer in &mut consumers {
+            println!("{}", "= ".repeat(40));
+            consumer.report();
+        }
+
+        println!("");
+        thread::sleep(ten_seconds);
     }
 }

@@ -44,8 +44,6 @@ impl Consumer for ErrorWatcher {
             Some('5') => *self.errors.entry(ErrorCode::Error5xx).or_insert(0) += 1,
             _ => (),
         }
-
-        self.report();
     }
 
     fn report(&self) {
