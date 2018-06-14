@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::thread;
 use std::time::Duration;
 
-use chrono::now;
+use chrono::prelude::*;
 
 mod consumer;
 mod parser;
@@ -73,9 +73,9 @@ pub fn run(config: Config) -> Result<(), Box<(Error)>> {
             }
         }
 
-        println!("{}");
+        println!("\nAt {}", Local::now().format("%d %b %Y %H:%M:%S"));
         for consumer in &mut consumers {
-            println!("{}", "= ".repeat(40));
+            println!("{}", "=".repeat(80));
             consumer.report();
         }
 
