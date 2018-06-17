@@ -2,11 +2,12 @@ import re
 import time
 import sys
 from datetime import datetime, timezone
+import pytz
 
 
 def replace_time(line):
     """Replace time in the """
-    current_time = datetime.now(timezone.utc).strftime('%d/%b/%Y:%H:%M:%S %z')
+    current_time = datetime.now(pytz.timezone("Europe/Paris")).strftime('%d/%b/%Y:%H:%M:%S %z')
     current_time = '[' + current_time + ']'
     return re.sub(r'\[.+\]', current_time, line)
 
